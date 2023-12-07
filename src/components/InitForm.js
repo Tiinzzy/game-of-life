@@ -4,7 +4,10 @@ import { TextField, Button, Box, Typography } from '@mui/material';
 
 import BackEndConnection from './BackEndConnection';
 
+import EventEmitter from 'eventemitter3';
+
 const backend = BackEndConnection.INSTANCE();
+export const eventEmitter = new EventEmitter();
 
 class InitForm extends Component {
     constructor(props) {
@@ -40,8 +43,9 @@ class InitForm extends Component {
             };
             backend.game_of_life_init(query, (data) => {
                 if (data.board.length > 0) {
-                    console.log(data)
-                    this.setState({ grid: data.board });
+                    this.setState({ grid: data.board }, () => {
+                        eventEmitter.emit('boardReady', { data: data });
+                    });
                 }
             })
         }
