@@ -6,6 +6,7 @@ import InitForm from './InitForm';
 import Board from './Board';
 
 import { eventEmitter } from './InitForm';
+import { eventEmitterRestart } from './Board';
 
 class Home extends Component {
     constructor(props) {
@@ -18,8 +19,12 @@ class Home extends Component {
     componentDidMount() {
         eventEmitter.on('boardReady', (data) => {
             if (data.data.generation >= 0) {
-                this.setState({ displayBoard: true, gridData: data.data })
+                this.setState({ displayBoard: true, gridData: data.data, row: data.row, column: data.column });
             }
+        });
+
+        eventEmitterRestart.on('restartGame', () => {
+            this.setState({ displayBoard: false });
         });
     }
 
@@ -27,7 +32,9 @@ class Home extends Component {
     render() {
         return (
             <Box>
-                {this.state.displayBoard ? <Board grid={this.state.gridData.board} generation={this.state.gridData.generation} /> : <InitForm />}
+                {this.state.displayBoard ? <Board grid={this.state.gridData.board} generation={this.state.gridData.generation}
+                    row={this.state.row} column={this.state.column} />
+                    : <InitForm />}
             </Box>
         );
     }
