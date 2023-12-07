@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
+
 import { TextField, Button, Box, Typography } from '@mui/material';
+
+import BackEndConnection from './BackEndConnection';
+
+const backend = BackEndConnection.INSTANCE();
 
 class Home extends Component {
     constructor(props) {
@@ -8,23 +13,38 @@ class Home extends Component {
             row: 30,
             column: 40,
             initialization: 100,
+            errorMsg: false
         };
     }
 
     handleGetRow(e) {
-        this.setState({ row: e.target.value });
+        this.setState({ row: e.target.value, errorMsg: false });
     }
 
     handleGetColumn(e) {
-        this.setState({ column: e.target.value });
+        this.setState({ column: e.target.value, errorMsg: false });
     }
 
     handleGetInitialization(e) {
-        this.setState({ initialization: e.target.value })
+        this.setState({ initialization: e.target.value, errorMsg: false })
     }
 
     createBoard() {
-        console.log(this.state.initialization, this.state.row, this.state.column);
+        if (this.state.initialization >= this.state.row * this.state.column) {
+            this.setState({ errorMsg: true })
+        } else {
+            let query = {
+                row: this.state.row * 1,
+                column: this.state.column * 1,
+                initCount: this.state.initialization
+            };
+            backend.game_of_life_init(query, (data) => {
+                if (data.board.length > 0) {
+                    console.log(data)
+                    this.setState({ grid: data.board });
+                }
+            })
+        }
     }
 
     render() {
@@ -59,8 +79,10 @@ class Home extends Component {
                             name="initialization"
                             value={this.state.initialization}
                             onChange={(e) => this.handleGetInitialization(e)}
+                            error={this.state.errorMsg}
+                            helperText={this.state.errorMsg && "Large Value"}
                         />
-                        <Button variant="contained" style={{ marginTop: '20px', display: 'block', width: '100%' }} onClick={() => this.createBoard()}>
+                        <Button variant="contained" style={{ marginTop: '30px', display: 'block', width: '100%' }} onClick={() => this.createBoard()}>
                             Create
                         </Button>
                     </form>
