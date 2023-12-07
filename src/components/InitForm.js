@@ -44,7 +44,7 @@ class InitForm extends Component {
             backend.game_of_life_init(query, (data) => {
                 if (data.board.length > 0) {
                     this.setState({ grid: data.board }, () => {
-                        eventEmitter.emit('boardReady', { data: data });
+                        eventEmitter.emit('boardReady', { data: data, row: this.state.row, column: this.state.column });
                     });
                 }
             })
