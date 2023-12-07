@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import PlayCircleFilledWhiteIcon from '@mui/icons-material/PlayCircleFilledWhite';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -8,6 +8,9 @@ import Tooltip from '@mui/material/Tooltip';
 
 import BackEndConnection from './BackEndConnection';
 
+import EventEmitter from 'eventemitter3';
+
+export const eventEmitterRestart = new EventEmitter();
 const backend = BackEndConnection.INSTANCE();
 
 function boardIsEmpty(boardObject) {
@@ -26,8 +29,11 @@ class Board extends Component {
         this.state = {
             grid: props.grid,
             generation: props.generation,
+            row: props.row,
+            column: props.column,
             evolveGenerations: null,
-            delay: 900
+            delay: 900,
+            msg: 'initial'
         };
     }
 
@@ -63,34 +69,61 @@ class Board extends Component {
 
     }
 
+    handleCellClick(row, col) {
+        let newGrid = this.state.grid;
+        newGrid[row][col] = (newGrid[row][col] + 1) % 2;
+        this.setState({ grid: newGrid, msg: 'update' });
+    }
+
     fetchNextGenerations() {
-        if (this.state.evolveGenerations !== null) {
-            clearInterval(this.state.evolveGenerations);
-        }
-        let evolveGenerations = setInterval(() => {
-            backend.fetch_evolved_generation((data) => {
-                this.setState({ grid: data.board }, () => {
-                    if (boardIsEmpty(data.board)) {
-                        clearInterval(evolveGenerations);
-                    }
-                });
+        if (this.state.msg === 'update') {
+            let query = {
+                grid: this.state.grid,
+                row: this.state.row * 1,
+                column: this.state.column * 1,
+            };
+            backend.update_grid(query, (data) => {
+                if (data) {
+                    this.setState({ grid: data.board, msg: 'initial' }, () => this.fetchNextGenerations());
+                }
             })
-        }, this.state.delay);
-        this.setState({ evolveGenerations });
+        } else {
+            let evolveGenerations = setInterval(() => {
+                backend.fetch_evolved_generation((data) => {
+                    this.setState({ grid: data.board }, () => {
+                        if (boardIsEmpty(data.board)) {
+                            clearInterval(evolveGenerations);
+                        }
+                    });
+                })
+            }, this.state.delay);
+            this.setState({ evolveGenerations });
+        }
+    }
+
+    pauseGame() {
+        clearInterval(this.state.evolveGenerations);
+    }
+
+    restartGame() {
+        eventEmitterRestart.emit('restartGame');
     }
 
     render() {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" marginTop={5} flexDirection='column'>
+                <Typography variant="h4" style={{ margin: '20px 0', textAlign: 'center' }}>
+                    Generation: {this.props.generation}
+                </Typography>
                 <Box marginBottom={3}>
                     <Tooltip title="Start">
                         <PlayCircleFilledWhiteIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.fetchNextGenerations()} />
                     </Tooltip>
                     <Tooltip title="Pause">
-                        <PauseCircleIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} />
+                        <PauseCircleIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.pauseGame()} />
                     </Tooltip>
                     <Tooltip title="Reset">
-                        <RestartAltIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} />
+                        <RestartAltIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.restartGame()} />
                     </Tooltip>
                 </Box>
                 <div>
