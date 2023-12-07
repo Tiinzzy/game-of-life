@@ -18,7 +18,7 @@ class Home extends Component {
     componentDidMount() {
         eventEmitter.on('boardReady', (data) => {
             if (data.data.generation >= 0) {
-                this.setState({ displayBoard: true })
+                this.setState({ displayBoard: true, gridData: data.data })
             }
         });
     }
@@ -27,7 +27,7 @@ class Home extends Component {
     render() {
         return (
             <Box>
-                {this.state.displayBoard ? <Board /> : <InitForm />}
+                {this.state.displayBoard ? <Board grid={this.state.gridData.board} generation={this.state.gridData.generation} /> : <InitForm />}
             </Box>
         );
     }
