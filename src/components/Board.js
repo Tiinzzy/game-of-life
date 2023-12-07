@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import PlayCircleFilledWhiteIcon from '@mui/icons-material/PlayCircleFilledWhite';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -35,7 +35,8 @@ class Board extends Component {
             delay: 800,
             msg: 'initial',
             clickedStart: false,
-            clickedPause: false
+            clickedPause: false,
+            gen: 0
         };
     }
 
@@ -91,8 +92,10 @@ class Board extends Component {
             })
         } else {
             let evolveGenerations = setInterval(() => {
+                let gen = 0;
+                gen += this.state.gen + 1;
                 backend.fetch_evolved_generation((data) => {
-                    this.setState({ grid: data.board, clickedStart: true, clickedPause: false }, () => {
+                    this.setState({ grid: data.board, clickedStart: true, clickedPause: false, gen: gen }, () => {
                         if (boardIsEmpty(data.board)) {
                             clearInterval(evolveGenerations);
                         }
@@ -116,6 +119,7 @@ class Board extends Component {
     render() {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" marginTop={5} flexDirection='column'>
+                <Typography variant="h4" style={{ margin: '10px 0', textAlign: 'center' }}>Generation: {this.state.gen}</Typography>
                 <Box marginBottom={3}>
                     <Tooltip title="Start">
                         <PlayCircleFilledWhiteIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15, color: this.state.clickedStart && "#2196f3" }} onClick={() => this.fetchNextGenerations()} />
