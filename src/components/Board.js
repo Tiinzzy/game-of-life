@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import PlayCircleFilledWhiteIcon from '@mui/icons-material/PlayCircleFilledWhite';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -32,8 +32,10 @@ class Board extends Component {
             row: props.row,
             column: props.column,
             evolveGenerations: null,
-            delay: 900,
-            msg: 'initial'
+            delay: 800,
+            msg: 'initial',
+            clickedStart: false,
+            clickedPause: false
         };
     }
 
@@ -84,13 +86,13 @@ class Board extends Component {
             };
             backend.update_grid(query, (data) => {
                 if (data) {
-                    this.setState({ grid: data.board, msg: 'initial' }, () => this.fetchNextGenerations());
+                    this.setState({ clickedStart: true, grid: data.board, msg: 'initial', clickedPause: false }, () => this.fetchNextGenerations());
                 }
             })
         } else {
             let evolveGenerations = setInterval(() => {
                 backend.fetch_evolved_generation((data) => {
-                    this.setState({ grid: data.board }, () => {
+                    this.setState({ grid: data.board, clickedStart: true, clickedPause: false }, () => {
                         if (boardIsEmpty(data.board)) {
                             clearInterval(evolveGenerations);
                         }
@@ -102,7 +104,9 @@ class Board extends Component {
     }
 
     pauseGame() {
-        clearInterval(this.state.evolveGenerations);
+        this.setState({ clickedStart: false, clickedPause: true }, () => {
+            clearInterval(this.state.evolveGenerations);
+        });
     }
 
     restartGame() {
@@ -112,15 +116,12 @@ class Board extends Component {
     render() {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" marginTop={5} flexDirection='column'>
-                <Typography variant="h4" style={{ margin: '20px 0', textAlign: 'center' }}>
-                    Generation: {this.props.generation}
-                </Typography>
                 <Box marginBottom={3}>
                     <Tooltip title="Start">
-                        <PlayCircleFilledWhiteIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.fetchNextGenerations()} />
+                        <PlayCircleFilledWhiteIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15, color: this.state.clickedStart && "#2196f3" }} onClick={() => this.fetchNextGenerations()} />
                     </Tooltip>
                     <Tooltip title="Pause">
-                        <PauseCircleIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.pauseGame()} />
+                        <PauseCircleIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15, color: this.state.clickedPause && "#2196f3" }} onClick={() => this.pauseGame()} />
                     </Tooltip>
                     <Tooltip title="Reset">
                         <RestartAltIcon fontSize='large' style={{ cursor: 'pointer', marginRight: 15 }} onClick={() => this.restartGame()} />
